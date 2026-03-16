@@ -1,6 +1,6 @@
 import logging
 from .state import CheckPointManager
-from .engine import PolarsEngine
+from .engine import PolarsEngine,SchemaManager
 from .scanner import FileScanner
 
 # Setup logging to ensure Airflow users can see progress in task logs
@@ -8,7 +8,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class OpenAutoLoader:
-    def __init__(self, source: str, target: str, check_point: str, extension: str = "csv", table_type: str = "delta"):
+    def __init__(self, source: str, target: str, check_point: str,schema_path:str, extension: str = "csv", table_type: str = "delta"):
         """
         The main orchestrator for the OpenAutoLoader library.
 
@@ -21,10 +21,12 @@ class OpenAutoLoader:
         self.source = source
         self.target = target
         self.check_point = check_point
+        self.schema_path = schema_path
         self.extension = extension
 
         # Initialize the sub-modules (Dependency Injection)
         self.check_point_manager = CheckPointManager(check_point)
+        self.schema_manager = SchemaManager(schema_path)
         self.polars_engine = PolarsEngine(target_path=target, table_type=table_type)
         self.file_scanner = FileScanner(source, extension)
 
@@ -45,12 +47,15 @@ class OpenAutoLoader:
 
         # 2. Schema Locking Phase
         # First, try to get the schema from the existing target table
-        locked_schema = self.polars_engine.get_reference_schema()
-
-        # If the table doesn't exist, infer the schema from the first new file
-        if locked_schema is not None:
-            logger.info("Target table not found or empty. Inferring schema from first file.")
+        if self.schema_manager.schema_exists():
+            logger.info("Loading existing schema contract.")
+            locked_schema = self.schema_manager.load_schema()
+        else:
+            logger.info("No schema contract found. Bootstrapping from first file.")
+            # Infer from the first file in the current discovery list
             locked_schema = self.polars_engine.get_schema(files[0])
+            # Persist it so future runs (and the rest of this loop) are locked
+            self.schema_manager.save_schema(locked_schema)
 
         # 3. Processing Phase (Atomic Loop)
         for file_path in files:
