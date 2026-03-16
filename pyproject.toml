@@ -1,0 +1,34 @@
+[project]
+name = "open-auto-loader"
+version = "0.1.0"
+description = "A lightweight, Databricks-style autoloader using Polars and SQLite."
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "Nitish Katkade" }]
+dependencies = [
+    "connectorx>=0.4.5",
+    "deltalake>=1.5.0",
+    "polars>=1.39.0",
+    "pyarrow>=23.0.1",
+    "sqlalchemy>=2.0.48",
+]
+
+[project.scripts]
+open-auto-loader = "open_auto_loader:main"
+
+[build-system]
+requires = ["uv_build>=0.8.8,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.2.0",
+]
+
+
+[project.optional-dependencies]
+# Allows users to install Airflow-specific support if needed
+airflow = [
+    "apache-airflow>=2.8.0",
+]
+
