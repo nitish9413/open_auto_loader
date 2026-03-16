@@ -74,3 +74,69 @@ def test_schema_mismatch_fails(tmp_path):
         loader.run(batch_id="b2")
 
     assert "Schema Mismatch" in str(excinfo.value)
+
+
+def test_parquet_loading(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+
+    df = pl.DataFrame({"id": [1, 2]})
+    # Write as Parquet instead of CSV
+    df.write_parquet(source / "data.parquet")
+
+    loader = OpenAutoLoader(
+        source=str(source),
+        target=str(tmp_path / "target"),
+        check_point=str(tmp_path / "cp"),
+        schema_path=str(tmp_path / "schema"),
+        format_type="parquet" # Set format
+    )
+    loader.run(batch_id="p1")
+
+    assert pl.read_delta(str(tmp_path / "target")).height == 2
+
+def test_recursive_discovery(tmp_path):
+    source = tmp_path / "source"
+    nested_dir = source / "year=2026" / "month=03"
+    nested_dir.mkdir(parents=True)
+
+    df = pl.DataFrame({"id": [1]})
+    df.write_csv(nested_dir / "nested_data.csv")
+
+    loader = OpenAutoLoader(
+        source=str(source),
+        target=str(tmp_path / "target"),
+        check_point=str(tmp_path / "cp"),
+        schema_path=str(tmp_path / "schema"),
+    )
+
+    loader.run(batch_id="recursive_test")
+
+    # Assert that the nested file was found and processed
+    result = pl.read_delta(str(tmp_path / "target"))
+    assert result.height == 1
+
+def test_data_type_mismatch_fails(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+
+    # 1. Lock schema with an Integer
+    df1 = pl.DataFrame({"age": [25, 30]})
+    df1.write_csv(source / "file1.csv")
+
+    loader = OpenAutoLoader(
+        source=str(source),
+        target=str(tmp_path / "target"),
+        check_point=str(tmp_path / "cp"),
+        schema_path=str(tmp_path / "schema"),
+    )
+    loader.run(batch_id="init")
+
+    # 2. Try to process a file where 'age' is a String
+    df2 = pl.DataFrame({"age": ["Unknown"]})
+    df2.write_csv(source / "file2.csv")
+
+    with pytest.raises(TypeError) as excinfo:
+        loader.run(batch_id="fail_expected")
+
+    assert "Type Drift" in str(excinfo.value)
