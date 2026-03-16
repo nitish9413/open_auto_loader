@@ -9,4 +9,8 @@ wheels/
 # Virtual environments
 .venv
 experiment/
-
+data/
+perf_run_metadata/
+*.txt
+benchmark/
+reports/

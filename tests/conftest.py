@@ -1,6 +1,6 @@
+
 import pytest
-import shutil
-from pathlib import Path
+
 
 @pytest.fixture
 def test_env(tmp_path):
@@ -12,7 +12,7 @@ def test_env(tmp_path):
         "source": tmp_path / "source",
         "target": tmp_path / "target",
         "checkpoint": tmp_path / "checkpoint",
-        "schema": tmp_path / "schema_root"
+        "schema": tmp_path / "schema_root",
     }
 
     for path in env.values():
