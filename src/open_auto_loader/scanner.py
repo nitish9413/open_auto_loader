@@ -24,17 +24,22 @@ class FileScanner:
         self, source_dir: str, format_type: str = "csv", storage_options: dict = None
     ):
         self.source_raw = source_dir
-        self.storage_options = storage_options
+        self.storage_options = storage_options or {}
 
         self.protocol = source_dir.split("://")[0] if "://" in source_dir else "file"
 
         try:
             self.fs = fsspec.filesystem(self.protocol, **self.storage_options)
-        except ImportError:
-            raise ImportError(
-                f"Protocol '{self.protocol}' requires an extra dependency. "
-                f"Please install it using: pip install open-auto-loader[{self.protocol}]"
-            )
+        except (ImportError, ValueError) as e:
+            msg = f"Protocol '{self.protocol}' is not supported or missing driver."
+            if self.protocol == "s3":
+                msg += " Run: pip install s3fs"
+            elif self.protocol in ["abfs", "abfss"]:
+                msg += " Run: pip install adlfs"
+            elif self.protocol == "gs":
+                msg += " Run: pip install gcsfs"
+
+            raise ImportError(msg) from e
 
         if self.protocol == "file":
             self.source_path = str(Path(source_dir).resolve()).replace("\\", "/")

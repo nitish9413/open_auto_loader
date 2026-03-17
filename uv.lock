@@ -2106,21 +2106,31 @@ name = "open-auto-loader"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "adlfs" },
     { name = "connectorx" },
     { name = "deltalake" },
     { name = "fsspec" },
-    { name = "gcsfs" },
     { name = "polars" },
     { name = "pyarrow" },
-    { name = "requests" },
-    { name = "s3fs" },
     { name = "sqlalchemy" },
 ]
 
 [package.optional-dependencies]
 airflow = [
     { name = "apache-airflow" },
+]
+all = [
+    { name = "adlfs" },
+    { name = "gcsfs" },
+    { name = "s3fs" },
+]
+aws = [
+    { name = "s3fs" },
+]
+azure = [
+    { name = "adlfs" },
+]
+gcp = [
+    { name = "gcsfs" },
 ]
 
 [package.dev-dependencies]
@@ -2134,19 +2144,21 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "adlfs", specifier = ">=2026.2.0" },
+    { name = "adlfs", marker = "extra == 'all'", specifier = ">=2026.2.0" },
+    { name = "adlfs", marker = "extra == 'azure'", specifier = ">=2026.2.0" },
     { name = "apache-airflow", marker = "extra == 'airflow'", specifier = ">=2.8.0" },
     { name = "connectorx", specifier = ">=0.4.5" },
     { name = "deltalake", specifier = ">=1.5.0" },
     { name = "fsspec", specifier = ">=2026.2.0" },
-    { name = "gcsfs", specifier = ">=2026.2.0" },
+    { name = "gcsfs", marker = "extra == 'all'", specifier = ">=2026.2.0" },
+    { name = "gcsfs", marker = "extra == 'gcp'", specifier = ">=2026.2.0" },
     { name = "polars", specifier = ">=1.39.0" },
     { name = "pyarrow", specifier = ">=23.0.1" },
-    { name = "requests", specifier = ">=2.32.5" },
-    { name = "s3fs", specifier = ">=2026.2.0" },
+    { name = "s3fs", marker = "extra == 'all'", specifier = ">=2026.2.0" },
+    { name = "s3fs", marker = "extra == 'aws'", specifier = ">=2026.2.0" },
     { name = "sqlalchemy", specifier = ">=2.0.48" },
 ]
-provides-extras = ["airflow"]
+provides-extras = ["aws", "azure", "gcp", "all", "airflow"]
 
 [package.metadata.requires-dev]
 dev = [
