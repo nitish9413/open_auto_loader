@@ -1,33 +1,30 @@
 # 🚀 OpenAutoLoader
 
-**OpenAutoLoader** is a high-performance, incremental data ingestion library for Python. It provides a "Set and Forget" experience for ingesting raw files into professional Delta Lake tables, built entirely on the **Polars** engine.
-
-It is designed for Data Engineers who need a lightweight, open-source alternative to proprietary ingestion tools while maintaining strict schema governance.
+**OpenAutoLoader** is a high-performance, incremental data ingestion library for Python. It provides a "Set and Forget" experience for ingesting raw files from **Local Storage, AWS S3, Azure Blob, and GCP** into professional Delta Lake tables, built entirely on the **Polars** engine.
 
 ---
 
 ## ✨ Key Features
 
-* **Incremental Loading**: Uses a SQLite-backed checkpoint system to ensure files are processed **exactly once**.
-* **Schema Governance**: Automatically bootstraps a schema on the first run and enforces a strict JSON contract to prevent data poisoning.
-* **Streaming Execution**: Leverages Polars' `sink_delta(streaming=True)` to process datasets larger than your RAM.
-* **Audit-Ready**: Automatically injects metadata columns: `_batch_id`, `_processed_at`, and `_file_path`.
-* **Recursive Discovery**: Scans deeply nested directory structures automatically.
+* **Incremental Loading**: SQLite-backed checkpoint system ensures files are processed **exactly once**.
+* **Multi-Cloud Support**: Native support for `s3://`, `abfss://`, and `gs://` protocols.
+* **Schema Governance**: Automatically bootstraps and enforces a strict JSON contract to prevent data poisoning.
+* **Streaming Execution**: Leverages Polars' `sink_delta(streaming=True)` to process datasets larger than RAM.
+* **Audit-Ready**: Automatically injects metadata: `_batch_id`, `_processed_at`, and `_file_path`.
 
 ---
 
 ## 🛠️ Architecture
 
-OpenAutoLoader is built on a modular, "Strategy-based" architecture:
+OpenAutoLoader uses a modular architecture designed for extensibility:
 
 | Component | Responsibility |
 | --- | --- |
 | **`OpenAutoLoader`** | The Orchestrator. Coordinates discovery, validation, and execution. |
-| **`FileScanner`** | Discovery. Recursively finds new files based on format extensions. |
-| **`PolarsEngine`** | Execution. Handles the LazyFrame transformations and Delta sinks. |
-| **`ReaderFactory`** | Abstraction. Maps file extensions to the correct Polars reader (CSV, Parquet, etc). |
+| **`FileScanner`** | Discovery. Uses `fsspec` to recursively find new files across cloud providers. |
+| **`PolarsEngine`** | Execution. Handles LazyFrame transformations and high-speed Delta sinks. |
 | **`SchemaManager`** | Governance. Serializes the data contract to JSON and validates new batches. |
-| **`CheckPointManager`** | Persistence. Tracks file hashes in SQLite to prevent duplicate processing. |
+| **`CheckPointManager`** | Persistence. Tracks processed file paths to prevent duplicate ingestion. |
 
 ---
 
@@ -36,61 +33,57 @@ OpenAutoLoader is built on a modular, "Strategy-based" architecture:
 ### 1. Installation
 
 ```bash
-# Using uv (recommended)
-uv add open_auto_loader
-
-# Using pip
+# Core library
 pip install open_auto_loader
 
+# With Cloud Drivers (Optional)
+pip install s3fs adlfs gcsfs
 ```
 
-### 2. Basic Usage
+### 2. Cloud Ingestion (AWS S3 Example)
 
 ```python
 from open_auto_loader import OpenAutoLoader
 
-# Initialize the loader
+# Define your cloud credentials
+storage_options = {
+    "aws_access_key_id": "YOUR_KEY",
+    "aws_secret_access_key": "YOUR_SECRET",
+    "aws_region": "ap-south-1"
+}
+
 loader = OpenAutoLoader(
-    source="./raw_data/landing",    # Source directory
-    target="./data_lake/silver",   # Target Delta table
-    check_point="./metadata",      # Checkpoint database location
-    schema_path="./contracts",     # JSON Schema storage
-    format_type="parquet"          # Supports 'csv', 'parquet', 'ndjson'
+    source="s3://my-raw-bucket/incoming/",
+    target="s3://my-silver-bucket/tables/users",
+    check_point="./metadata",       # Checkpoints stay local for speed
+    schema_path="./contracts",      # Schemas stay local for governance
+    format_type="csv",
+    storage_options=storage_options
 )
 
-# Run an ingestion batch
-loader.run(batch_id="daily_ingestion_v1")
-
+loader.run(batch_id="daily_batch_001")
 ```
+
+---
+
+## ☁️ Supported Cloud Protocols
+
+| Provider | Protocol | Required Driver | `storage_options` keys |
+| --- | --- | --- | --- |
+| **Local** | `file://` | None | None |
+| **AWS S3** | `s3://` | `s3fs` | `aws_access_key_id`, `aws_region` |
+| **Azure Blob**| `abfss://`| `adlfs`| `account_name`, `account_key` |
+| **GCP GCS** | `gs://` | `gcsfs` | `token` (path to JSON key) |
 
 ---
 
 ## 📋 Schema Management
 
-OpenAutoLoader implements **Schema Locking**.
+OpenAutoLoader implements **Schema Locking**:
 
-1. **Bootstrap**: On the first run, the library reads the first file found, infers its types, and saves a `schema_contract.json`.
-2. **Enforcement**: On all subsequent runs, every file is checked against this contract.
-3. **Validation**: If a file has missing columns, extra columns, or **Type Drift** (e.g., an Int arriving as a String), the batch is aborted before it touches the target table.
-
----
-
-## 🧪 Development & Testing
-
-We use `pytest` for all unit and integration tests.
-
-```bash
-# Run the test suite
-uv run pytest
-
-```
-
-### Adding New Formats
-
-To add a new format (like Avro):
-
-1. Add a new Reader class in `readers.py` implementing the `FormatReader` Protocol.
-2. Register the format and extensions in `ReaderFactory` and `FileScanner`.
+1. **Bootstrap**: On the first run, the library infers types from the first file found and saves a `schema_contract.json`.
+2. **Enforcement**: Every subsequent file is validated against this contract before processing.
+3. **Type Safety**: If a file exhibits **Type Drift** (e.g., an Integer column arriving as a String), the batch is aborted to maintain target table integrity.
 
 ---
 

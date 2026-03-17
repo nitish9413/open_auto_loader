@@ -1,7 +1,8 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, List
 
-# Using TYPE_CHECKING to avoid circular imports during type hinting
+import fsspec
+
 if TYPE_CHECKING:
     from .state import CheckPointManager
 
@@ -19,51 +20,63 @@ class FileScanner:
         "ndjson": {".ndjson", ".jsonl"},
     }
 
-    def __init__(self, source_dir: str, format_type: str = "csv"):
-        self.source_dir = Path(source_dir).resolve()
+    def __init__(
+        self, source_dir: str, format_type: str = "csv", storage_options: dict = None
+    ):
+        self.source_raw = source_dir
+        self.storage_options = storage_options
 
-        if not self.source_dir.exists():
-            raise FileNotFoundError(
-                f"Source directory does not exist: {self.source_dir}"
+        self.protocol = source_dir.split("://")[0] if "://" in source_dir else "file"
+
+        try:
+            self.fs = fsspec.filesystem(self.protocol, **self.storage_options)
+        except ImportError:
+            raise ImportError(
+                f"Protocol '{self.protocol}' requires an extra dependency. "
+                f"Please install it using: pip install open-auto-loader[{self.protocol}]"
             )
 
-        # Get extensions for the chosen format, default to the format name itself if not in map
+        if self.protocol == "file":
+            self.source_path = str(Path(source_dir).resolve()).replace("\\", "/")
+        else:
+            self.source_path = source_dir.split("://")[-1].rstrip("/")
+
         self.valid_extensions = self.FORMAT_MAP.get(
             format_type.lower(), {f".{format_type.lower()}"}
         )
 
-    def _list_all_files(self) -> List[Path]:
-        """
-        Scans source_dir recursively for non-hidden, non-empty files
-        matching the valid extensions.
-        """
+    def _list_all_files(self) -> List[str]:
+        """Scans source_dir recursively using fsspec find."""
         eligible = []
 
-        # Iterate through each valid extension (e.g., .parquet and .pq)
-        for ext in self.valid_extensions:
-            # rglob enables recursive search through subdirectories
-            for file in self.source_dir.rglob(f"*{ext}"):
-                if (
-                    not file.name.startswith((".", "_"))  # Skip hidden/metadata files
-                    and file.is_file()  # Ensure it's not a directory
-                    and file.stat().st_size > 0  # Skip empty files
-                ):
-                    eligible.append(file)
+        try:
+            all_paths = self.fs.find(self.source_path)
 
-        # Deduplicate (in case a file matches multiple patterns) and
-        # Sort by modification time to maintain chronological order
-        unique_eligible = list({str(f.resolve()): f for f in eligible}.values())
-        unique_eligible.sort(key=lambda x: x.stat().st_mtime)
+            for path in all_paths:
+                path_str = str(path)
 
-        return unique_eligible
+                if any(path_str.endswith(ext) for ext in self.valid_extensions):
+                    file_name = path_str.split("/")[-1]
+
+                    if not file_name.startswith((".", "_")):
+                        eligible.append(self._ensure_protocol(path_str))
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to scan {self.protocol} storage: {e}")
+
+        eligible.sort()
+        return eligible
+
+    def _ensure_protocol(self, path: str) -> list[str]:
+        if "://" not in path and self.protocol != "file":
+            return f"{self.protocol}://{path}"
+        return path
 
     def get_eligible_files(self, checkpoint_manager: "CheckPointManager") -> List[str]:
         """
         Discovers files and filters them against the CheckPointManager
         to return only those that haven't been processed yet.
         """
-        # Convert Path objects to absolute strings for the Checkpoint Manager
-        all_paths = [str(file.resolve()) for file in self._list_all_files()]
+        all_paths = self._list_all_files()
 
-        # Delegate to the state manager to filter out already-processed files
         return checkpoint_manager.filter_new_files(all_paths)

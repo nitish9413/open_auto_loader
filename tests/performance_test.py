@@ -66,7 +66,7 @@ def run_performance_test():
             target=str(target),
             check_point=str(checkpoint),
             schema_path=str(schema_path),
-            extension=test_file.suffix.replace(".", ""),  # Dynamically use csv or txt
+            format_type=test_file.suffix.replace(".", ""),  # Dynamically use csv or txt
         )
 
         # We run with a unique batch ID

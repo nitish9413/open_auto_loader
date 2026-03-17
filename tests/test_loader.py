@@ -1,6 +1,8 @@
 import polars as pl
 import pytest
+
 from open_auto_loader import OpenAutoLoader
+
 
 def test_full_workflow(tmp_path):
     # 1. Setup paths using only tmp_path
@@ -70,7 +72,9 @@ def test_schema_mismatch_fails(tmp_path):
     bad_df.write_csv(source / "bad.csv")
 
     # 4. ASSERT that it raises an Exception
-    with pytest.raises(ValueError) as excinfo: # Use ValueError if that's what your SchemaManager raises
+    with pytest.raises(
+        ValueError
+    ) as excinfo:  # Use ValueError if that's what your SchemaManager raises
         loader.run(batch_id="b2")
 
     assert "Schema Mismatch" in str(excinfo.value)
@@ -89,11 +93,12 @@ def test_parquet_loading(tmp_path):
         target=str(tmp_path / "target"),
         check_point=str(tmp_path / "cp"),
         schema_path=str(tmp_path / "schema"),
-        format_type="parquet" # Set format
+        format_type="parquet",  # Set format
     )
     loader.run(batch_id="p1")
 
     assert pl.read_delta(str(tmp_path / "target")).height == 2
+
 
 def test_recursive_discovery(tmp_path):
     source = tmp_path / "source"
@@ -115,6 +120,7 @@ def test_recursive_discovery(tmp_path):
     # Assert that the nested file was found and processed
     result = pl.read_delta(str(tmp_path / "target"))
     assert result.height == 1
+
 
 def test_data_type_mismatch_fails(tmp_path):
     source = tmp_path / "source"
