@@ -14,3 +14,21 @@ perf_run_metadata/
 *.txt
 benchmark/
 reports/
+
+
+# Database / Checkpoints
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment Secrets (Crucial!)
+.env
+.env.local
+
+# IDE Specifics
+.vscode/
+.idea/
+
+# OS Specifics
+.DS_Store
+Thumbs.db
