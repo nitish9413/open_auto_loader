@@ -1,92 +1,89 @@
 # 🚀 OpenAutoLoader
 
-**OpenAutoLoader** is a high-performance, incremental data ingestion library for Python. It provides a "Set and Forget" experience for ingesting raw files from **Local Storage, AWS S3, Azure Blob, and GCP** into professional Delta Lake tables, built entirely on the **Polars** engine.
+[![PyPI version](https://img.shields.io/pypi/v/open-auto-loader.svg?color=blue)](https://pypi.org/project/open-auto-loader/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Powered by Polars](https://img.shields.io/badge/powered%20by-polars-orange.svg)](https://pola.rs/)
 
----
+**OpenAutoLoader** is a high-performance, incremental data ingestion engine. It bridges the gap between raw cloud storage and production-ready Delta Lakes using the lightning-fast **Polars Rust engine**.
 
-## ✨ Key Features
+Stop writing complex Spark jobs for simple file ingestion. OpenAutoLoader provides a "Databricks-style" Auto Loader experience in a lightweight Python package.
 
-* **Incremental Loading**: SQLite-backed checkpoint system ensures files are processed **exactly once**.
-* **Multi-Cloud Support**: Native support for `s3://`, `abfss://`, and `gs://` protocols.
-* **Schema Governance**: Automatically bootstraps and enforces a strict JSON contract to prevent data poisoning.
-* **Streaming Execution**: Leverages Polars' `sink_delta(streaming=True)` to process datasets larger than RAM.
-* **Audit-Ready**: Automatically injects metadata: `_batch_id`, `_processed_at`, and `_file_path`.
+-----
 
----
+## 💡 Why OpenAutoLoader?
 
-## 🛠️ Architecture
+Traditional ingestion often requires heavy JVM clusters (Spark) or manual file tracking. OpenAutoLoader changes that:
 
-OpenAutoLoader uses a modular architecture designed for extensibility:
+  * **Zero-Spark Overhead**: Runs on standard Python environments with Rust-level performance.
+  * **Exactly-Once Processing**: Integrated SQLite checkpointing ensures no duplicate data, even if a job restarts.
+  * **Schema First**: Automatically infers, saves, and enforces JSON schema contracts to prevent data corruption.
+  * **Cloud Native**: A single API for Local, S3, Azure Blob (ABFSS), and GCS.
 
-| Component | Responsibility |
-| --- | --- |
-| **`OpenAutoLoader`** | The Orchestrator. Coordinates discovery, validation, and execution. |
-| **`FileScanner`** | Discovery. Uses `fsspec` to recursively find new files across cloud providers. |
-| **`PolarsEngine`** | Execution. Handles LazyFrame transformations and high-speed Delta sinks. |
-| **`SchemaManager`** | Governance. Serializes the data contract to JSON and validates new batches. |
-| **`CheckPointManager`** | Persistence. Tracks processed file paths to prevent duplicate ingestion. |
+-----
 
----
-
-## 🚀 Quick Start
-
-### 1. Installation
+## 🛠️ Installation
 
 ```bash
-# Core library
-pip install open_auto_loader
+# Core (Local files only)
+pip install open-auto-loader
 
-# With Cloud Drivers (Optional)
-pip install s3fs adlfs gcsfs
+# Full Cloud Support (Recommended)
+pip install "open-auto-loader[all]"
 ```
 
-### 2. Cloud Ingestion (AWS S3 Example)
+-----
+
+## 🚀 Quick Start: S3 to Delta Lake
 
 ```python
 from open_auto_loader import OpenAutoLoader
 
 # Define your cloud credentials
 storage_options = {
-    "aws_access_key_id": "YOUR_KEY",
-    "aws_secret_access_key": "YOUR_SECRET",
-    "aws_region": "ap-south-1"
+    "aws_access_key_id": "YOUR_ACCESS_KEY",
+    "aws_secret_access_key": "YOUR_SECRET_KEY",
+    "region": "ap-south-1"
 }
 
+# Initialize the loader
 loader = OpenAutoLoader(
-    source="s3://my-raw-bucket/incoming/",
-    target="s3://my-silver-bucket/tables/users",
-    check_point="./metadata",       # Checkpoints stay local for speed
-    schema_path="./contracts",      # Schemas stay local for governance
-    format_type="csv",
+    source="s3://my-raw-bucket/incoming_logs/",
+    target="s3://my-silver-bucket/tables/user_logs",
+    check_point="./metadata/checkpoints.db",
+    schema_path="./metadata/schemas/",
     storage_options=storage_options
 )
 
-loader.run(batch_id="daily_batch_001")
+# Run the ingestion batch
+loader.run(batch_id="daily_run_2026_03_18")
 ```
 
----
+-----
 
-## ☁️ Supported Cloud Protocols
+## 🏗️ Architecture: How it Works
 
-| Provider | Protocol | Required Driver | `storage_options` keys |
-| --- | --- | --- | --- |
-| **Local** | `file://` | None | None |
-| **AWS S3** | `s3://` | `s3fs` | `aws_access_key_id`, `aws_region` |
-| **Azure Blob**| `abfss://`| `adlfs`| `account_name`, `account_key` |
-| **GCP GCS** | `gs://` | `gcsfs` | `token` (path to JSON key) |
+1.  **Scanner**: Uses `fsspec` to identify new files since the last successful `batch_id`.
+2.  **Schema Guard**: Checks the file header against the stored JSON contract in `schema_path`.
+3.  **Polars Engine**: Streams the data using `sink_delta()`, minimizing memory footprint.
+4.  **Metadata Injection**: Automatically adds `_batch_id`, `_processed_at`, and `_source_file` to every row for full auditability.
+5.  **Committer**: Updates the SQLite checkpoint only after a successful Delta write.
 
----
+-----
 
-## 📋 Schema Management
+## 📋 Compatibility Matrix
 
-OpenAutoLoader implements **Schema Locking**:
+| Feature | Local | AWS S3 | Azure Blob | Google GCS |
+| :--- | :---: | :---: | :---: | :---: |
+| **Incremental Loading** | ✅ | ✅ | ✅ | ✅ |
+| **Schema Enforcement** | ✅ | ✅ | ✅ | ✅ |
+| **Service Principal Auth**| N/A | ✅ | ✅ | ✅ |
+| **Streaming Sink** | ✅ | ✅ | ✅ | ✅ |
 
-1. **Bootstrap**: On the first run, the library infers types from the first file found and saves a `schema_contract.json`.
-2. **Enforcement**: Every subsequent file is validated against this contract before processing.
-3. **Type Safety**: If a file exhibits **Type Drift** (e.g., an Integer column arriving as a String), the batch is aborted to maintain target table integrity.
+-----
 
----
+## 🤝 Contributing
 
-## 📜 License
+Contributions are welcome\! Whether it's a bug fix, a new cloud provider, or performance tuning, feel free to open a PR.
 
-MIT License.
+Created with ❤️ by [Nitish Katkade](https://github.com/nitish9413)
