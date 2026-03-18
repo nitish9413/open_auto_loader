@@ -32,3 +32,8 @@ reports/
 # OS Specifics
 .DS_Store
 Thumbs.db
+
+# example tesing
+delta/
+schema/
+checkpoint/
