@@ -50,7 +50,7 @@ class PolarsEngine:
         for key, value in metadata.items():
             metadata_cols.append(pl.lit(value).alias(key))
 
-        lf = lf.with_columns(metadata)
+        lf = lf.with_columns(metadata_cols)
 
         if self.table_type == "delta":
             lf.sink_delta(
