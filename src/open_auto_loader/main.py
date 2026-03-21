@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAutoLoader:
+    _RESERVED_KEYS = {"_file_path", "_processed_at", "_batch_id"}
+
     def __init__(
         self,
         source: str,
@@ -19,12 +21,16 @@ class OpenAutoLoader:
         format_type: str = "csv",
         table_type: str = "delta",
         storage_options: dict = None,
+        metadata: dict = None,
     ):
         self.source = source
         self.target = target
         self.check_point = check_point
         self.schema_path = schema_path
         self.format_type = format_type
+        self.metadata = metadata or {}
+        self._validate_metadata()
+
         raw_options = storage_options or {}
 
         self.scanner_options = self._get_scanner_options(source, raw_options)
@@ -44,6 +50,15 @@ class OpenAutoLoader:
         self.file_scanner = FileScanner(
             source, format_type, storage_options=self.scanner_options
         )
+
+    def _validate_metadata(self):
+        """Ensures user metadata doesn't collide with internal audit columns."""
+        for key in self.metadata.keys():
+            if key in self._RESERVED_KEYS:
+                raise ValueError(
+                    f"Forbidden key '{key}' found in metadata. "
+                    f"Reserved keys are: {list(self._RESERVED_KEYS)}"
+                )
 
     def _get_scanner_options(self, source: str, options: dict) -> dict:
         """Filters options so only Python-friendly keys remain."""
@@ -95,7 +110,7 @@ class OpenAutoLoader:
                 self.schema_manager.validate(current_file_schema)
 
                 self.engine.process_single_file(
-                    file_path=file_path, schema_dict=locked_schema, batch_id=batch_id
+                    file_path=file_path, schema_dict=locked_schema, batch_id=batch_id,metadata=self.metadata
                 )
 
                 self.check_point_manager.mark_processed(file_path, batch_id=batch_id)

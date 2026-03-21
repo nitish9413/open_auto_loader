@@ -29,7 +29,9 @@ class PolarsEngine:
         """Helper for the SchemaManager to bootstrap the JSON contract."""
         return self.reader.get_schema(file_path, storage_options=self.storage_options)
 
-    def process_single_file(self, file_path: str, schema_dict: dict, batch_id: str):
+    def process_single_file(
+        self, file_path: str, schema_dict: dict, batch_id: str, metadata: dict
+    ):
         """The core ETL step: Read -> Enrich -> Sink."""
 
         if self.target_protocol == "file":
@@ -39,13 +41,16 @@ class PolarsEngine:
             file_path, schema=schema_dict, storage_options=self.storage_options
         )
 
-        lf = lf.with_columns(
-            [
-                pl.lit(batch_id).alias("_batch_id"),
-                pl.lit(datetime.now(timezone.utc)).alias("_processed_at"),
-                pl.lit(file_path).alias("_file_path"),
-            ]
-        )
+        metadata_cols = [
+            pl.lit(batch_id).alias("_batch_id"),
+            pl.lit(datetime.now(timezone.utc)).alias("_processed_at"),
+            pl.lit(file_path).alias("_file_path"),
+        ]
+
+        for key, value in metadata.items():
+            metadata_cols.append(pl.lit(value).alias(key))
+
+        lf = lf.with_columns(metadata)
 
         if self.table_type == "delta":
             lf.sink_delta(

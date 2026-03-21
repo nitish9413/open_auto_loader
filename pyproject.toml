@@ -1,6 +1,6 @@
 [project]
 name = "open-auto-loader"
-version = "0.1.0"
+version = "0.1.2"
 description = "A lightweight, Databricks-style autoloader using Polars and SQLite."
 readme = "README.md"
 requires-python = ">=3.12"
