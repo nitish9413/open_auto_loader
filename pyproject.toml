@@ -1,6 +1,6 @@
 [project]
 name = "open-auto-loader"
-version = "0.1.2"
+version = "0.1.3"
 description = "A lightweight, Databricks-style autoloader using Polars and SQLite."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -44,3 +44,75 @@ dev = [
     "ruff>=0.15.6",
     "tqdm>=4.67.3",
 ]
+
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes — undefined names, unused imports
+    "I",    # isort — import ordering
+    "UP",   # pyupgrade — List->list, Optional->X|None, etc.
+    "B",    # flake8-bugbear — common logic bugs
+    "SIM",  # flake8-simplify — redundant patterns
+    "ANN",  # flake8-annotations — missing type hints
+    "RUF",  # ruff-specific rules
+    "C90",  # mccabe complexity
+    "TRY",  # tryceratops — exception handling patterns
+    "EM",   # flake8-errmsg — exception message style
+    "G",    # flake8-logging-format
+    "LOG",  # flake8-logging — catches basicConfig in library code
+    "PT",   # flake8-pytest-style
+]
+ignore = [
+    "ANN101",  # missing type for self
+    "ANN102",  # missing type for cls
+    "ANN204",  # missing return type for __init__
+    "TRY003",  # long exception messages — we want descriptive errors
+    "EM101",   # string literal in exception
+    "EM102",   # f-string in exception
+]
+unfixable = [
+    "F841",    # unused variable — might be intentional placeholder
+    "B007",    # unused loop variable
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ANN", "S101"]
+"src/open_auto_loader/__init__.py" = ["ANN", "F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["open_auto_loader"]
+force-sort-within-sections = true
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.flake8-annotations]
+mypy-init-return = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# mypy config — also append to pyproject.toml
+# ──────────────────────────────────────────────────────────────────────────────
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+warn_unreachable = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = ["deltalake.*", "fsspec.*", "connectorx.*"]
+ignore_missing_imports = true

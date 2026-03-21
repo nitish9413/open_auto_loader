@@ -110,7 +110,10 @@ class OpenAutoLoader:
                 self.schema_manager.validate(current_file_schema)
 
                 self.engine.process_single_file(
-                    file_path=file_path, schema_dict=locked_schema, batch_id=batch_id,metadata=self.metadata
+                    file_path=file_path,
+                    schema_dict=locked_schema,
+                    batch_id=batch_id,
+                    metadata=self.metadata,
                 )
 
                 self.check_point_manager.mark_processed(file_path, batch_id=batch_id)
