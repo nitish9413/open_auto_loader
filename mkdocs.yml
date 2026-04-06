@@ -1,0 +1,46 @@
+site_name: OpenAutoLoader
+site_description: Efficient Polars-powered incremental data loader for Delta Lake.
+site_author: Nitish Katkade
+repo_url: https://github.com/nitish9413/open_auto_loader
+
+theme:
+  name: material
+  palette:
+    # Auto-switch between light and dark mode based on system settings
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        hint: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        hint: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]  # This allows it to find your core code
+
+nav:
+  - Home: index.md
+  - 🛠️ Setup:
+      - Installation: installation.md
+      - Getting Started: getting-started.md
+  - 📖 Guides:
+      - Features: features.md
+      - Cloud Storage: storage-configs.md
+  - 🔍 Reference:
+      - API Reference: reference.md

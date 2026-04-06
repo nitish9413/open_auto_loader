@@ -12,6 +12,15 @@ logger = logging.getLogger(__name__)
 
 
 class OpenAutoLoader:
+    """
+    The main orchestrator for incremental data loading.
+
+    Attributes:
+        source (str): The source path (Local or Cloud URL).
+        target (str): The target Delta Lake path.
+        format_type (str): Format of source files (csv, parquet, ndjson).
+    """
+
     _RESERVED_KEYS: set[str] = {"_file_path", "_processed_at", "_batch_id"}
 
     def __init__(
@@ -71,6 +80,12 @@ class OpenAutoLoader:
                 )
 
     def run(self, batch_id: str) -> None:
+        """
+        Executes the ingestion loop for all new files.
+
+        Args:
+            batch_id: A unique identifier for this processing run.
+        """
         logger.info("Starting OpenAutoLoader batch", extra={"batch_id": batch_id})
 
         new_files = self.file_scanner.get_eligible_files(self.check_point_manager)
