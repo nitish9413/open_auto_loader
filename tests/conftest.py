@@ -1,7 +1,7 @@
 import pytest
 
 
-@pytest.fixture
+@pytest.fixture()
 def test_env(tmp_path):
     """
     Sets up a standardized environment for every test.
@@ -17,7 +17,7 @@ def test_env(tmp_path):
     for path in env.values():
         path.mkdir()
 
-    yield env
+    return env
 
     # Optional: Cleanup after test is done
     # shutil.rmtree(tmp_path)

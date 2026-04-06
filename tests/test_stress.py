@@ -1,6 +1,5 @@
-import os
-import shutil
 from pathlib import Path
+import shutil
 
 import polars as pl
 import pytest
@@ -8,7 +7,7 @@ import pytest
 from open_auto_loader import OpenAutoLoader
 
 
-@pytest.fixture
+@pytest.fixture()
 def stress_env(tmp_path):
     """
     Setup and Teardown fixture.

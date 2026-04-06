@@ -41,7 +41,7 @@ class OpenAutoLoaderError(Exception):
             report(e.context)
     """
 
-    def __init__(self, message: str, **context: Any) -> None:  # noqa: ANN401
+    def __init__(self, message: str, **context: Any) -> None:
         self.context: dict[str, Any] = context
         super().__init__(message)
 

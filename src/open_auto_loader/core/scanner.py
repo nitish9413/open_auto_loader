@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 import fsspec
 
@@ -21,7 +21,10 @@ class FileScanner:
     }
 
     def __init__(
-        self, source_dir: str, format_type: str = "csv", storage_options: dict = None
+        self,
+        source_dir: str,
+        format_type: str = "csv",
+        storage_options: dict | None = None,
     ):
         self.source_raw = source_dir
         self.storage_options = storage_options or {}
@@ -50,7 +53,7 @@ class FileScanner:
             format_type.lower(), {f".{format_type.lower()}"}
         )
 
-    def _list_all_files(self) -> List[str]:
+    def _list_all_files(self) -> list[str]:
         """Scans source_dir recursively using fsspec find."""
         eligible = []
 
@@ -67,7 +70,7 @@ class FileScanner:
                         eligible.append(self._ensure_protocol(path_str))
 
         except Exception as e:
-            raise RuntimeError(f"Failed to scan {self.protocol} storage: {e}")
+            raise RuntimeError(f"Failed to scan {self.protocol} storage: {e}")  # noqa: B904
 
         eligible.sort()
         return eligible
@@ -77,7 +80,7 @@ class FileScanner:
             return f"{self.protocol}://{path}"
         return path
 
-    def get_eligible_files(self, checkpoint_manager: "CheckPointManager") -> List[str]:
+    def get_eligible_files(self, checkpoint_manager: "CheckPointManager") -> list[str]:
         """
         Discovers files and filters them against the CheckPointManager
         to return only those that haven't been processed yet.

@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import polars as pl
 
@@ -15,16 +15,16 @@ class SchemaManager:
     def schema_exists(self) -> bool:
         return self.schema_file.exists()
 
-    def save_schema(self, schema: Dict[str, Any]):
+    def save_schema(self, schema: dict[str, Any]):
         """Serializes Polars schema to JSON."""
         # Convert pl.DataType to string (e.g., pl.Int64 -> "Int64")
         serialized = {col: str(dtype) for col, dtype in schema.items()}
         with open(self.schema_file, "w") as f:
             json.dump(serialized, f, indent=4)
 
-    def load_schema(self) -> Dict[str, Any]:
+    def load_schema(self) -> dict[str, Any]:
         """Deserializes JSON back to Polars schema."""
-        with open(self.schema_file, "r") as f:
+        with open(self.schema_file) as f:
             data = json.load(f)
 
         # Convert strings back to Polars objects
@@ -32,7 +32,7 @@ class SchemaManager:
             col: self._string_to_dtype(dtype_str) for col, dtype_str in data.items()
         }
 
-    def validate(self, current_schema: Dict[str, Any]):
+    def validate(self, current_schema: dict[str, Any]):
         """Strict validation against the locked contract."""
         reference = self.load_schema()
 

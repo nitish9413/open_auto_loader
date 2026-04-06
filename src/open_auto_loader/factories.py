@@ -1,10 +1,8 @@
-from typing import Type
-
-from .reader import CSVReader, FormatReader, NDJsonReader, ParquetReader
+from .core.reader import CSVReader, FormatReader, NDJsonReader, ParquetReader
 
 
 class ReaderFactory:
-    _STATERGY_MAP: dict[str, Type[FormatReader]] = {
+    _STATERGY_MAP: dict[str, type[FormatReader]] = {
         "csv": CSVReader,
         "parquet": ParquetReader,
         "ndjson": NDJsonReader,
@@ -23,7 +21,8 @@ class ReaderFactory:
         target = format_name.lower()
         if target not in cls._STATERGY_MAP:
             raise ValueError(
-                f"Unsupported format: {format_name}. Supported: {list(cls._STRATEGY_MAP.keys())}"
+                f"Unsupported format : {format_name}. \n"
+                f"Supported: {list(cls._STRATEGY_MAP.keys())}"
             )
         return cls._STATERGY_MAP[target]()
 

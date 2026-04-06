@@ -1,9 +1,9 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import polars as pl
 
-from .factories import ReaderFactory
+from ..factories import ReaderFactory
 
 
 class PolarsEngine:
@@ -12,7 +12,7 @@ class PolarsEngine:
         target_path: str,
         format_type: str = "csv",
         table_type: str = "delta",
-        storage_options: dict = None,
+        storage_options: dict | None = None,
     ):
         self.target_path = target_path
         self.table_type = table_type
@@ -43,7 +43,7 @@ class PolarsEngine:
 
         metadata_cols = [
             pl.lit(batch_id).alias("_batch_id"),
-            pl.lit(datetime.now(timezone.utc)).alias("_processed_at"),
+            pl.lit(datetime.now(UTC)).alias("_processed_at"),
             pl.lit(file_path).alias("_file_path"),
         ]
 

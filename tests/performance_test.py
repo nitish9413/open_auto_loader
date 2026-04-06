@@ -1,8 +1,8 @@
+from datetime import datetime
 import json
 import logging
-import time
-from datetime import datetime
 from pathlib import Path
+import time
 
 import polars as pl
 import psutil
@@ -73,7 +73,7 @@ def run_performance_test():
         loader.run(batch_id=f"perf_test_{datetime.now().strftime('%H%M%S')}")
 
     except Exception as e:
-        logger.error(f"❌ Performance test failed: {e}")
+        logger.exception(f"❌ Performance test failed: {e}")
         return
 
     # 5. Metric Collection
@@ -107,7 +107,8 @@ def run_performance_test():
 
     logger.info("✅ Performance test complete!")
     logger.info(
-        f"⏱️ Duration: {duration:.2f}s | 📈 Speed: {report['performance']['rows_per_second']:,} rows/s"
+        f"⏱️ Duration: {duration:.2f}s |\n"
+        f"📈 Speed: {report['performance']['rows_per_second']:,} rows/s"
     )
     logger.info(f"💾 Report saved to: {report_file}")
 

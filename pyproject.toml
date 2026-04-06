@@ -76,7 +76,9 @@ ignore = [
     "TRY003",  # long exception messages — we want descriptive errors
     "EM101",   # string literal in exception
     "EM102",   # f-string in exception
-    "RUF012"
+    "RUF012",
+    "G004",
+    "TRY401"
 ]
 unfixable = [
     "F841",    # unused variable — might be intentional placeholder
@@ -85,7 +87,7 @@ unfixable = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["ANN", "S101"]
-"src/open_auto_loader/__init__.py" = ["ANN", "F401"]
+"src/open_auto_loader/*.py" = ["ANN", "F401"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["open_auto_loader"]

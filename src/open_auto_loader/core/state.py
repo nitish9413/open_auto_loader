@@ -1,7 +1,6 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 import hashlib
 from pathlib import Path
-from typing import List, Optional
 
 from sqlalchemy import Column, DateTime, String, Text, create_engine, select
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -15,7 +14,7 @@ class ProcessedFile(Base):
     path_hash = Column(String(64), primary_key=True)
     original_path = Column(Text, nullable=False)
     batch_id = Column(String(100), nullable=False)
-    processed_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    processed_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
 
 class CheckPointManager:
@@ -50,7 +49,7 @@ class CheckPointManager:
     def _get_hash(self, path: str):
         return hashlib.sha256(path.encode()).hexdigest()
 
-    def filter_new_files(self, file_paths: List[str]):
+    def filter_new_files(self, file_paths: list[str]):
         if not file_paths:
             return []
 

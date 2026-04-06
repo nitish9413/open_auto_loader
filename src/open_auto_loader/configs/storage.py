@@ -30,7 +30,8 @@ class AWSConfig(StorageConfig):
         options["secret"] = self.aws_secret_access_key.get_secret_value()
 
         # 2. Standardize for Polars (uses 'aws_access_key_id')
-        #(It's already there from the model fields, but we ensure secret is stringified)
+        # (It's already there from the model fields,
+        # but we ensure secret is stringified)
         options["aws_secret_access_key"] = self.aws_secret_access_key.get_secret_value()
 
         # 3. Handle Token if exists
