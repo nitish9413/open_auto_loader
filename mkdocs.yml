@@ -2,6 +2,7 @@ site_name: OpenAutoLoader
 site_description: Efficient Polars-powered incremental data loader for Delta Lake.
 site_author: Nitish Katkade
 repo_url: https://github.com/nitish9413/open_auto_loader
+site_url: https://nitish9413.github.io/open_auto_loader/
 
 theme:
   name: material
