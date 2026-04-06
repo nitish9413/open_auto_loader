@@ -1,0 +1,16 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.0
+    hooks:
+      - id: ruff
+        args: [ --fix ]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: check-branch-name
+        name: Enforce Branch Naming
+        language: system
+        pass_filenames: false
+        always_run: true
+        entry: 'python -c "import sys, subprocess, re; out = subprocess.run([''git'', ''symbolic-ref'', ''--short'', ''HEAD''], capture_output=True); branch = out.stdout.decode().strip(); pattern = r''^(main|develop|((feature|bugfix|hotfix|chore)/[a-z0-9._-]+))$''; sys.exit(1) if not re.match(pattern, branch) else sys.exit(0)"'
