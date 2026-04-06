@@ -1,5 +1,5 @@
-import hashlib
 from datetime import datetime, timezone
+import hashlib
 from pathlib import Path
 from typing import List, Optional
 
@@ -65,7 +65,7 @@ class CheckPointManager:
 
         return [path_map[h] for h in incoming_hashes if h not in existing_hashes]
 
-    def mark_processed(self, file_path: str, batch_id: Optional[str] = None):
+    def mark_processed(self, file_path: str, batch_id: str | None = None):
         """Commits the file record to SQLite to prevent double-processing."""
         bid = batch_id or f"manual_{datetime.now().strftime('%Y%m%d%H%M')}"
 
