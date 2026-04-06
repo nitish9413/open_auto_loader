@@ -2,10 +2,11 @@ from .core.reader import CSVReader, FormatReader, NDJsonReader, ParquetReader
 
 
 class ReaderFactory:
-    _STATERGY_MAP: dict[str, type[FormatReader]] = {
+    _STRATEGY_MAP: dict[str, type[FormatReader]] = {
         "csv": CSVReader,
         "parquet": ParquetReader,
         "ndjson": NDJsonReader,
+        "jsonl": NDJsonReader,
     }
 
     _EXTENSION_MAP = {
@@ -19,15 +20,17 @@ class ReaderFactory:
     @classmethod
     def get_reader_by_format(cls, format_name: str) -> FormatReader:
         target = format_name.lower()
-        if target not in cls._STATERGY_MAP:
+        # 2. Updated to use the correct variable name
+        if target not in cls._STRATEGY_MAP:
             raise ValueError(
-                f"Unsupported format : {format_name}. \n"
+                f"Unsupported format: {format_name}. \n"
                 f"Supported: {list(cls._STRATEGY_MAP.keys())}"
             )
-        return cls._STATERGY_MAP[target]()
+        return cls._STRATEGY_MAP[target]()
 
     @classmethod
     def get_reader_by_extension(cls, extension: str) -> FormatReader:
+        # Handles both "csv" and ".csv" inputs
         ext = (
             extension.lower() if extension.startswith(".") else f".{extension.lower()}"
         )
