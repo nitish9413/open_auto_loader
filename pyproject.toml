@@ -14,6 +14,7 @@ dependencies = [
     "sqlalchemy>=2.0.48",
     "pyarrow>=23.0.1",
     "connectorx>=0.4.5",
+    "pydantic>=2.12.5",
 ]
 
 [project.optional-dependencies]
@@ -70,12 +71,11 @@ select = [
     "PT",   # flake8-pytest-style
 ]
 ignore = [
-    "ANN101",  # missing type for self
-    "ANN102",  # missing type for cls
     "ANN204",  # missing return type for __init__
     "TRY003",  # long exception messages — we want descriptive errors
     "EM101",   # string literal in exception
     "EM102",   # f-string in exception
+    "RUF012"
 ]
 unfixable = [
     "F841",    # unused variable — might be intentional placeholder
