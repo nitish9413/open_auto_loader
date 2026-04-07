@@ -1,3 +1,5 @@
+from open_auto_loader.exceptions import UnsupportedFormatError
+
 from .core.reader import CSVReader, FormatReader, NDJsonReader, ParquetReader
 
 
@@ -22,9 +24,10 @@ class ReaderFactory:
         target = format_name.lower()
         # 2. Updated to use the correct variable name
         if target not in cls._STRATEGY_MAP:
-            raise ValueError(
-                f"Unsupported format: {format_name}. \n"
-                f"Supported: {list(cls._STRATEGY_MAP.keys())}"
+            raise UnsupportedFormatError(
+                f"Unsupported format: {format_name}",
+                format_type=format_name,
+                supported_formats=list(cls._STRATEGY_MAP.keys()),
             )
         return cls._STRATEGY_MAP[target]()
 

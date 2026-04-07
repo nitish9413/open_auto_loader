@@ -106,7 +106,10 @@ class OpenAutoLoader:
             try:
                 # Schema Enforcement
                 current_file_schema = self.engine.get_inferred_schema(file_path)
-                self.schema_manager.validate(current_file_schema)
+
+                self.schema_manager.validate(
+                    current_schema=current_file_schema, file_path=str(file_path)
+                )
 
                 # Incremental Process
                 self.engine.process_single_file(
@@ -121,10 +124,10 @@ class OpenAutoLoader:
                 logger.info("Processed:", extra={"file_path": file_path})
 
             except Exception as e:
-                # Use logger.exception to automatically capture the stack trace
+                # Catching specifically to log context before re-raising
                 logger.exception(
                     "Failed processing file",
-                    extra={"file_path": file_path, "e": str(e)},
+                    extra={"file_path": file_path, "error": str(e)},
                 )
                 raise
 
