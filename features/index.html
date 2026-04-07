@@ -624,24 +624,69 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#schema-enforcement" class="md-nav__link">
+  <a href="#schema-evolution-integrity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🛡️ Schema Enforcement
+        🛡️ Schema Evolution &amp; Integrity
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🛡️ Schema Evolution &amp; Integrity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rescue-mode-the-safety-net" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🚀 Rescue Mode: The Safety Net
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#audit-metadata" class="md-nav__link">
+  <a href="#metadata-traceability" class="md-nav__link">
     <span class="md-ellipsis">
       
-        📑 Audit Metadata
+        📑 Metadata &amp; Traceability
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="📑 Metadata &amp; Traceability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#system-audit-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Audit Columns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -847,24 +892,69 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#schema-enforcement" class="md-nav__link">
+  <a href="#schema-evolution-integrity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        🛡️ Schema Enforcement
+        🛡️ Schema Evolution &amp; Integrity
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🛡️ Schema Evolution &amp; Integrity">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rescue-mode-the-safety-net" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🚀 Rescue Mode: The Safety Net
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#audit-metadata" class="md-nav__link">
+  <a href="#metadata-traceability" class="md-nav__link">
     <span class="md-ellipsis">
       
-        📑 Audit Metadata
+        📑 Metadata &amp; Traceability
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="📑 Metadata &amp; Traceability">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#system-audit-columns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Audit Columns
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Custom Metadata
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -932,16 +1022,45 @@
 <li><strong>Batch Isolation</strong>: Every run is assigned a unique <code>batch_id</code>, allowing you to trace exactly when and how data entered your system.</li>
 </ul>
 <hr />
-<h2 id="schema-enforcement">🛡️ Schema Enforcement</h2>
-<p>Data pipelines often fail due to unexpected changes in source files (e.g., a missing column or a changed data type).</p>
-<ul>
-<li><strong>Schema Bootstrapping</strong>: On the very first run, the library infers the schema from your source files and saves it as a <code>schema.json</code>.</li>
-<li><strong>Validation</strong>: Every subsequent run validates new files against this saved schema.</li>
-<li><strong>Integrity</strong>: If a new file does not match the expected structure, the ingestion will fail before corrupting your Delta Lake table.</li>
-</ul>
+<h2 id="schema-evolution-integrity">🛡️ Schema Evolution &amp; Integrity</h2>
+<p>OpenAutoLoader provides a sophisticated engine to handle "Schema Drift"—when source files change structure. You can control this behavior using the <code>evolution_mode</code> parameter.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Mode</th>
+<th style="text-align: left;">Strategy</th>
+<th style="text-align: left;">Physical Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>addNewColumns</code></td>
+<td style="text-align: left;"><strong>Evolve</strong></td>
+<td style="text-align: left;">Updates the JSON contract and evolves the Delta table.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>failOnNewColumns</code></td>
+<td style="text-align: left;"><strong>Strict</strong></td>
+<td style="text-align: left;">Raises <code>SchemaMismatchError</code> to stop the pipeline.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>none</code></td>
+<td style="text-align: left;"><strong>Ignore</strong></td>
+<td style="text-align: left;">Physically drops extra columns to match the existing contract.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>rescue</code></td>
+<td style="text-align: left;"><strong>Zero Loss</strong></td>
+<td style="text-align: left;">Moves unknown columns into a <code>_rescued_data</code> JSON blob.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="rescue-mode-the-safety-net">🚀 Rescue Mode: The Safety Net</h3>
+<p>Rescue mode allows the pipeline to continue running even if new columns appear by "stashing" them into a single column. This ensures your Delta table schema remains stable while preserving all incoming data.</p>
 <hr />
-<h2 id="audit-metadata">📑 Audit Metadata</h2>
-<p>To ensure your "Gold" or "Silver" layer tables are ready for production, OpenAutoLoader automatically enriches every row with technical metadata.</p>
+<h2 id="metadata-traceability">📑 Metadata &amp; Traceability</h2>
+<p>To ensure your "Gold" or "Silver" layer tables are ready for production, OpenAutoLoader automatically enriches every row with technical and custom metadata.</p>
+<h3 id="system-audit-columns">System Audit Columns</h3>
 <table>
 <thead>
 <tr>
@@ -952,24 +1071,35 @@
 <tbody>
 <tr>
 <td style="text-align: left;"><code>_batch_id</code></td>
-<td style="text-align: left;">The unique ID provided during the <code>.run()</code> call.</td>
+<td style="text-align: left;">Links rows to a specific execution run.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>_processed_at</code></td>
-<td style="text-align: left;">The exact UTC timestamp when the row was ingested.</td>
+<td style="text-align: left;">High-precision UTC timestamp of ingestion.</td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>_file_path</code></td>
-<td style="text-align: left;">The original source file path (useful for debugging data quality issues).</td>
+<td style="text-align: left;">Absolute source path for data lineage and debugging.</td>
 </tr>
 </tbody>
 </table>
+<h3 id="custom-metadata">Custom Metadata</h3>
+<p>You can inject arbitrary key-value pairs during the loader initialization. These are appended as physical columns to every row, perfect for tracking organizational context:</p>
+<pre><code class="language-python">loader = OpenAutoLoader(
+    ...
+    metadata={
+        &quot;env&quot;: &quot;production&quot;,
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;source_system&quot;: &quot;sap_erp&quot;
+    }
+)
+</code></pre>
 <hr />
 <h2 id="polars-engine">⚡ Polars Engine</h2>
 <p>Built on top of the <a href="https://pola.rs/">Polars</a> library, OpenAutoLoader is designed for high-speed I/O.</p>
 <ul>
-<li><strong>Lazy Evaluation</strong>: The engine builds a query plan and only executes it at the final "Sink" step.</li>
-<li><strong>Memory Efficient</strong>: Uses streaming and memory-mapping where possible to handle datasets larger than your RAM.</li>
+<li><strong>Lazy Evaluation</strong>: The engine builds an optimized query plan and only executes it at the final "Sink" step.</li>
+<li><strong>Memory Efficient</strong>: Uses streaming and memory-mapping to handle datasets larger than your RAM.</li>
 <li><strong>Native Delta Support</strong>: Uses the Polars <code>sink_delta</code> implementation for atomic, ACID-compliant writes.</li>
 </ul>
 <hr />
@@ -983,7 +1113,7 @@
 <h2 id="extensible-architecture">🛠️ Extensible Architecture</h2>
 <p>The library is built using the <strong>Strategy</strong> and <strong>Factory</strong> design patterns.</p>
 <ul>
-<li><strong>Format Support</strong>: Easily switch between <code>CSV</code>, <code>Parquet</code>, and <code>NDJSON/JSONL</code>.</li>
+<li><strong>Format Support</strong>: Native support for <code>CSV</code>, <code>Parquet</code>, and <code>NDJSON/JSONL</code>.</li>
 <li><strong>Modular Components</strong>: The Scanner, Engine, and Checkpoint systems are decoupled, making the library easy to maintain and extend for custom requirements.</li>
 </ul>
 

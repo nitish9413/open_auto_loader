@@ -415,7 +415,40 @@
   <a href="#why-openautoloader" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why OpenAutoLoader?
+        ✨ Why OpenAutoLoader?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🏗️ Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📖 Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🛠️ Installation
       
     </span>
   </a>
@@ -777,7 +810,40 @@
   <a href="#why-openautoloader" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Why OpenAutoLoader?
+        ✨ Why OpenAutoLoader?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🏗️ Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📖 Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🛠️ Installation
       
     </span>
   </a>
@@ -806,14 +872,45 @@
 
 <h1 id="openautoloader">🚀 OpenAutoLoader</h1>
 <p><strong>OpenAutoLoader</strong> is a high-performance, Polars-powered incremental data loader for Delta Lake.</p>
+<p><a href="https://pypi.org/project/open-auto-loader/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/open-auto-loader.svg?color=blue" /></a>
+<a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green.svg" /></a>
+<a href="https://www.python.org/downloads/"><img alt="Python 3.12+" src="https://img.shields.io/badge/python-3.12+-blue.svg" /></a>
+<a href="https://pola.rs/"><img alt="Powered by Polars" src="https://img.shields.io/badge/powered%20by-polars-orange.svg" /></a></p>
 <p>Inspired by Databricks Auto Loader, it provides a simple, open-source way to ingest data from local or cloud storage into a structured Delta Lake table with built-in checkpointing and schema enforcement.</p>
-<h2 id="why-openautoloader">Why OpenAutoLoader?</h2>
+<hr />
+<h2 id="why-openautoloader">✨ Why OpenAutoLoader?</h2>
 <ul>
-<li><strong>Performance</strong>: Built on Polars Lazy API for optimized I/O.</li>
-<li><strong>Safety</strong>: Pydantic-validated storage configurations.</li>
-<li><strong>Reliability</strong>: Atomic Delta Lake writes with ACID guarantees.</li>
-<li><strong>Auditability</strong>: Automatic injection of <code>_batch_id</code> and <code>_processed_at</code> metadata.</li>
+<li><strong>⚡ Performance</strong>: Built on the <strong>Polars Lazy API</strong> for optimized, multi-threaded I/O and memory-efficient processing.</li>
+<li><strong>🔄 Incremental Loading</strong>: Tracks processed files via a robust SQLite checkpoint system to ensure you only ingest <strong>new</strong> data.</li>
+<li><strong>🛡️ Schema Evolution &amp; Rescue</strong>: Supports multiple modes (<code>addNewColumns</code>, <code>failOnNewColumns</code>, <code>none</code>, and <code>rescue</code>). <strong>Rescue Mode</strong> preserves unknown data in a JSON blob to prevent ingestion failure.</li>
+<li><strong>📑 Auditability</strong>: Automatically enriches every row with technical metadata including <code>_batch_id</code>, <code>_processed_at</code>, and <code>_file_path</code>.</li>
+<li><strong>🛠️ Custom Metadata</strong>: Inject business context (like <code>env</code>, <code>source_system</code>, or <code>team</code>) as physical columns during ingestion.</li>
+<li><strong>☁️ Cloud Native</strong>: Native support for S3, GCS, and Azure Blob Storage via <code>fsspec</code> and Pydantic-validated storage configurations.</li>
+<li><strong>💎 Reliability</strong>: Leverages Delta Lake for <strong>ACID-compliant</strong>, atomic writes, ensuring your target table is never left in a corrupted state.</li>
 </ul>
+<hr />
+<h2 id="architecture">🏗️ Architecture</h2>
+<p>OpenAutoLoader uses a decoupled architecture of Scanners, Readers, and Engines to manage the lifecycle of a data batch.</p>
+<hr />
+<h2 id="quick-start">📖 Quick Start</h2>
+<pre><code class="language-python">from open_auto_loader import OpenAutoLoader, SchemaEvolutionMode
+
+# Initialize the loader
+loader = OpenAutoLoader(
+    source=&quot;s3://raw-zone/events/&quot;,
+    target=&quot;s3://silver-zone/events_table/&quot;,
+    checkpoint_path=&quot;./checkpoints/events.db&quot;,
+    evolution_mode=SchemaEvolutionMode.RESCUE,
+    metadata={&quot;env&quot;: &quot;production&quot;, &quot;source&quot;: &quot;web_logs&quot;}
+)
+
+# Run ingestion for a new batch
+loader.run(batch_id=&quot;daily_sync_2026_04_07&quot;)
+</code></pre>
+<hr />
+<h2 id="installation">🛠️ Installation</h2>
+<pre><code class="language-bash">pip install open-auto-loader
+</code></pre>
 
 
 
