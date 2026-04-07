@@ -11,7 +11,13 @@ class FormatReader(Protocol):
 
 class CSVReader:
     def scan(self, file_path: str, **kwargs) -> pl.LazyFrame:
-        return pl.scan_csv(file_path, **kwargs)
+        kwargs.pop("schema", None)  # never constrain CSV scan schema
+        kwargs.pop("schema_overrides", None)  # let all columns through
+        columns = kwargs.pop("columns", None)
+        lf = pl.scan_csv(file_path, **kwargs)
+        if columns:
+            lf = lf.select(columns)
+        return lf
 
     def get_schema(self, file_path: str, **kwargs) -> dict[str, Any]:
         # collect_schema() is fine for CSV as it has to scan to find headers anyway

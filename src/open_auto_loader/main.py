@@ -1,6 +1,9 @@
 import logging
 
+from open_auto_loader.exceptions import SchemaMismatchError
+
 from .configs import get_storage_config
+from .configs.schema import SchemaEvolutionMode
 from .configs.storage import StorageConfig
 from .core.engine import PolarsEngine
 from .core.scanner import FileScanner
@@ -33,12 +36,14 @@ class OpenAutoLoader:
         table_type: str = "delta",
         storage_config: StorageConfig | dict | None = None,
         metadata: dict | None = None,
+        evolution_mode: SchemaEvolutionMode = SchemaEvolutionMode.FAIL_ON_NEW_COLUMNS,
     ):
         self.source = source
         self.target = target
         self.check_point = check_point
         self.schema_path = schema_path
         self.format_type = format_type
+        self.evolution_mode = evolution_mode
 
         # 1. Metadata setup & Validation
         self.metadata = metadata or {}
@@ -94,7 +99,6 @@ class OpenAutoLoader:
             logger.info("No new files found to process. Exiting gracefully.")
             return
 
-        # Bootstrap Schema
         if not self.schema_manager.schema_exists():
             logger.info("No schema found. Bootstrapping...")
             inferred_schema = self.engine.get_inferred_schema(new_files[0])
@@ -103,30 +107,52 @@ class OpenAutoLoader:
         locked_schema = self.schema_manager.load_schema()
 
         for file_path in new_files:
+            current_file_schema = self.engine.get_inferred_schema(file_path)
+            diffs = self.schema_manager.check_differences(current_file_schema)
+
+            columns_to_write = None
+            if self.evolution_mode == SchemaEvolutionMode.NONE:
+                columns_to_write = list(locked_schema.keys())
+
+            if diffs["extra"]:
+                if self.evolution_mode == SchemaEvolutionMode.FAIL_ON_NEW_COLUMNS:
+                    raise SchemaMismatchError(
+                        "New Columns detected",
+                        extra_columns=diffs["extra"],
+                        file_path=str(file_path),
+                    )
+
+                elif self.evolution_mode == SchemaEvolutionMode.ADD_NEW_COLUMNS:
+                    logger.info(f"Evolving schema: adding {diffs['extra']}")
+                    self.schema_manager.evolve_schema(current_file_schema)
+                    locked_schema = self.schema_manager.load_schema()
+                    columns_to_write = None
+
+                elif self.evolution_mode == SchemaEvolutionMode.NONE:
+                    logger.warning(f"Ignoring extra columns: {diffs['extra']}")
+
+            self.schema_manager.validate(
+                current_schema=current_file_schema,
+                evolution_mode=self.evolution_mode,
+                file_path=str(file_path),
+            )
+
             try:
-                # Schema Enforcement
-                current_file_schema = self.engine.get_inferred_schema(file_path)
-
-                self.schema_manager.validate(
-                    current_schema=current_file_schema, file_path=str(file_path)
-                )
-
-                # Incremental Process
                 self.engine.process_single_file(
                     file_path=file_path,
                     schema_dict=locked_schema,
                     batch_id=batch_id,
                     metadata=self.metadata,
+                    evolution_mode=self.evolution_mode,
+                    selected_columns=columns_to_write,
                 )
 
-                # Commit State
                 self.check_point_manager.mark_processed(file_path, batch_id=batch_id)
-                logger.info("Processed:", extra={"file_path": file_path})
+                logger.info("Processed successfully", extra={"file_path": file_path})
 
             except Exception as e:
-                # Catching specifically to log context before re-raising
                 logger.exception(
-                    "Failed processing file",
+                    "Operational failure during ingestion",
                     extra={"file_path": file_path, "error": str(e)},
                 )
                 raise
