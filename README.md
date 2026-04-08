@@ -4,6 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![Powered by Polars](https://img.shields.io/badge/powered%20by-polars-orange.svg)](https://pola.rs/)
+![PyPI Downloads](https://img.shields.io/pepy/dt/open-auto-loader)
 
 **OpenAutoLoader** is a high-performance, incremental data ingestion engine. It bridges the gap between raw cloud storage and production-ready Delta Lakes using the lightning-fast **Polars Rust engine**.
 

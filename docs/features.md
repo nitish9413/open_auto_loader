@@ -13,33 +13,54 @@ The core value of OpenAutoLoader is its ability to process only **new** data.
 
 ---
 
-## 🛡️ Schema Enforcement
-Data pipelines often fail due to unexpected changes in source files (e.g., a missing column or a changed data type).
+## 🛡️ Schema Evolution & Integrity
+OpenAutoLoader provides a sophisticated engine to handle "Schema Drift"—when source files change structure. You can control this behavior using the `evolution_mode` parameter.
 
-- **Schema Bootstrapping**: On the very first run, the library infers the schema from your source files and saves it as a `schema.json`.
-- **Validation**: Every subsequent run validates new files against this saved schema.
-- **Integrity**: If a new file does not match the expected structure, the ingestion will fail before corrupting your Delta Lake table.
+
+
+| Mode | Strategy | Physical Action |
+| :--- | :--- | :--- |
+| `addNewColumns` | **Evolve** | Updates the JSON contract and evolves the Delta table. |
+| `failOnNewColumns` | **Strict** | Raises `SchemaMismatchError` to stop the pipeline. |
+| `none` | **Ignore** | Physically drops extra columns to match the existing contract. |
+| `rescue` | **Zero Loss** | Moves unknown columns into a `_rescued_data` JSON blob. |
+
+### 🚀 Rescue Mode: The Safety Net
+Rescue mode allows the pipeline to continue running even if new columns appear by "stashing" them into a single column. This ensures your Delta table schema remains stable while preserving all incoming data.
 
 ---
 
-## 📑 Audit Metadata
-To ensure your "Gold" or "Silver" layer tables are ready for production, OpenAutoLoader automatically enriches every row with technical metadata.
+## 📑 Metadata & Traceability
+To ensure your "Gold" or "Silver" layer tables are ready for production, OpenAutoLoader automatically enriches every row with technical and custom metadata.
 
-
-
+### System Audit Columns
 | Column | Description |
 | :--- | :--- |
-| `_batch_id` | The unique ID provided during the `.run()` call. |
-| `_processed_at` | The exact UTC timestamp when the row was ingested. |
-| `_file_path` | The original source file path (useful for debugging data quality issues). |
+| `_batch_id` | Links rows to a specific execution run. |
+| `_processed_at` | High-precision UTC timestamp of ingestion. |
+| `_file_path` | Absolute source path for data lineage and debugging. |
+
+### Custom Metadata
+You can inject arbitrary key-value pairs during the loader initialization. These are appended as physical columns to every row, perfect for tracking organizational context:
+
+```python
+loader = OpenAutoLoader(
+    ...
+    metadata={
+        "env": "production",
+        "region": "us-east-1",
+        "source_system": "sap_erp"
+    }
+)
+```
 
 ---
 
 ## ⚡ Polars Engine
 Built on top of the [Polars](https://pola.rs/) library, OpenAutoLoader is designed for high-speed I/O.
 
-- **Lazy Evaluation**: The engine builds a query plan and only executes it at the final "Sink" step.
-- **Memory Efficient**: Uses streaming and memory-mapping where possible to handle datasets larger than your RAM.
+- **Lazy Evaluation**: The engine builds an optimized query plan and only executes it at the final "Sink" step.
+- **Memory Efficient**: Uses streaming and memory-mapping to handle datasets larger than your RAM.
 - **Native Delta Support**: Uses the Polars `sink_delta` implementation for atomic, ACID-compliant writes.
 
 ---
@@ -55,5 +76,5 @@ OpenAutoLoader is storage-agnostic. By utilizing `fsspec`, it treats cloud paths
 ## 🛠️ Extensible Architecture
 The library is built using the **Strategy** and **Factory** design patterns.
 
-- **Format Support**: Easily switch between `CSV`, `Parquet`, and `NDJSON/JSONL`.
+- **Format Support**: Native support for `CSV`, `Parquet`, and `NDJSON/JSONL`.
 - **Modular Components**: The Scanner, Engine, and Checkpoint systems are decoupled, making the library easy to maintain and extend for custom requirements.
